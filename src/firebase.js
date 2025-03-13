@@ -6,7 +6,9 @@ import {
   signOut,
 } from "firebase/auth";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { toast } from "react-toastify";
 
+// Firebase Configuration (Directly in Code)
 const firebaseConfig = {
   apiKey: "AIzaSyCMgxVCseWWluiqBRnIASR8kT6Xv9XlRP4",
   authDomain: "netflix-295e9.firebaseapp.com",
@@ -16,14 +18,23 @@ const firebaseConfig = {
   appId: "1:753964274606:web:41810e73517788be9f2e3f",
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Error Handling Function
+const handleError = (error) => {
+  toast.error(error.code.split("/")[1].split("-").join(" "));
+};
+
+// Signup Function
 const signup = async (name, email, password) => {
   try {
     const res = await createUserWithEmailAndPassword(auth, email, password);
     const user = res.user;
+
+    // Save user data to Firestore
     await addDoc(collection(db, "users"), {
       uid: user.uid,
       name,
@@ -31,27 +42,27 @@ const signup = async (name, email, password) => {
       email,
     });
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+    handleError(error);
   }
 };
 
+// Login Function
 const login = async (email, password) => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+    handleError(error);
   }
 };
 
+// Logout Function
 const logout = async () => {
   try {
     await signOut(auth);
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+    handleError(error);
   }
 };
 
+// Export Firebase services
 export { auth, db, login, signup, logout };

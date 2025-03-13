@@ -1,21 +1,14 @@
 import "./Player.css";
 import back_arrow_icon from "../../assets/back_arrow_icon.png";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const Player = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [apiData, setApiData] = useState([
-    {
-      name: "",
-      kay: "",
-      published_at: "",
-      typeof: "",
-    },
-  ]);
+  const [apiData, setApiData] = useState(null);
+  const [error, setError] = useState("");
 
   const options = {
     method: "GET",
@@ -27,37 +20,57 @@ const Player = () => {
   };
 
   useEffect(() => {
-    fetch(
-      `https://api.themoviedb.org/3/movie/${id}/videos?language=en-US`,
-      options
-    )
-      .then((res) => res.json())
-      .then((res) => setApiData(res.results[0]))
-      .catch((err) => console.error(err));
-  }, []);
+    const fetchVideo = async () => {
+      try {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/movie/${id}/videos?language=en-US`,
+          options
+        );
+        const data = await response.json();
+
+        if (data.results && data.results.length > 0) {
+          setApiData(data.results[0]);
+        } else {
+          setError("No trailer available.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load video.");
+      }
+    };
+
+    fetchVideo();
+  }, [id]);
 
   return (
     <div className="player">
       <img
         src={back_arrow_icon}
-        alt=""
-        onClick={() => {
-          navigate(-2);
-        }}
+        alt="Back"
+        onClick={() => navigate(-1)}
+        className="back-button"
       />
-      <iframe
-        width="90%"
-        height="90%"
-        src={`https://www.youtube.com/embed/${apiData.key}`}
-        title="trailer"
-        frameBorder="0"
-        allowFullScreen
-      ></iframe>
-      <div className="player-info">
-        <p>{apiData.published_at?.slice(0, 10)}</p>
-        <p>{apiData.name}</p>
-        <p>{apiData.typeof}</p>
-      </div>
+      {error ? (
+        <p className="error-message">{error}</p>
+      ) : apiData ? (
+        <>
+          <iframe
+            width="90%"
+            height="90%"
+            src={`https://www.youtube.com/embed/${apiData.key}`}
+            title="trailer"
+            frameBorder="0"
+            allowFullScreen
+          ></iframe>
+          <div className="player-info">
+            <p>{apiData.published_at?.slice(0, 10)}</p>
+            <p>{apiData.name}</p>
+            <p>{apiData.type}</p>
+          </div>
+        </>
+      ) : (
+        <p>Loading...</p>
+      )}
     </div>
   );
 };
